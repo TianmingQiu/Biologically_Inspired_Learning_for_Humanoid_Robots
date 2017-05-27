@@ -1,0 +1,16 @@
+This is BibTeX, Version 0.99dThe top-level auxiliary file: NNCompare.aux
+The style file: IEEEtran.bst
+I couldn't open database file citation.bib
+---line 38 of file NNCompare.aux
+ : \bibdata{citation
+ :                  }
+I'm skipping whatever remains of this command
+I found no database files---while reading file NNCompare.aux
+Warning--I didn't find a database entry for "koenig1992complexity"
+Warning--I didn't find a database entry for "sutton1998reinforcement"
+-- IEEEtran.bst version 1.13 (2008/09/30) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+
+Done.
+(There were 2 error messages)
