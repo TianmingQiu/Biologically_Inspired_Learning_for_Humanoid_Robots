@@ -35,6 +35,7 @@ private:
     double MSE;
     int j;
     int k;
+    ofstream fileMSE;
 
 };
 
@@ -42,6 +43,7 @@ void CMAC::Train(double Y_in[nsample][N], double X_out[nsample][Q])
 {
     int iter = 1;
     Init(); // intialize Layer 2, assign random value to 'W'
+    fileMSE.open("data/MSE_ROBOT.txt");
     while (1)
     {
         MSE = 0;
@@ -77,6 +79,7 @@ void CMAC::Train(double Y_in[nsample][N], double X_out[nsample][Q])
         if (iter % 1 == 0)
         {
             cout << iter << "th iteration!" << endl << MSE << endl;
+            fileMSE << MSE << endl;
         }
         if (MSE < MSE_THRESHOLD)
         {
@@ -84,6 +87,7 @@ void CMAC::Train(double Y_in[nsample][N], double X_out[nsample][Q])
         }
         iter++;
     }//end while loop
+    fileMSE.close();
 }
 
 void CMAC::Init()  //assign random value to 'W'
