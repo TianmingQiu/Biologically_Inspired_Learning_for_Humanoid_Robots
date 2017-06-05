@@ -10,15 +10,16 @@ using namespace std;
 #define N 2 //input dimensions
 #define Q 2 //output dimensions
 #define Field_Size 5
-#define MSE_THRESHOLD 0.00006
+#define MSE_THRESHOLD 0.0001
 #define alpha 0.5
-#define nsample 857
+#define nsample 596
 
 static int RFpos[Field_Size][N] = { { 0, 3 }, { 1, 0 }, { 2, 2 }, { 3, 4 }, { 4, 1 } };
 //static int RFpos[Field_Size][N] = { { 0, 2 }, { 1, 0 }, { 2, 1 }};
 class CMAC
 {
 public:
+    //void Predict(double x, double y, double joint_value[]); //predict output by using the trained NN
     void Predict(double x, double y, double joint_value[]);
     void Train(double a_in[][N], double c_out[][Q]);
     void SavePara();
@@ -35,15 +36,16 @@ private:
     double MSE;
     int j;
     int k;
-    ofstream fileMSE;
 
 };
 
 void CMAC::Train(double Y_in[nsample][N], double X_out[nsample][Q])
 {
+    //nsample = sizeof(Y_in[0]) / sizeof(Y_in);
+
+
     int iter = 1;
-    Init(); // intialize Layer 2, assign random value to 'W'
-    fileMSE.open("data/MSE_ROBOT.txt");
+    Init();
     while (1)
     {
         MSE = 0;
@@ -55,7 +57,9 @@ void CMAC::Train(double Y_in[nsample][N], double X_out[nsample][Q])
                 Y[c] = Y_in[m][c];
             }
             Forward();
-            //update at each sample
+            //update
+
+
             for (int r = 0; r < Field_Size; r++)
             {
                 j = Position[r][0];
@@ -73,38 +77,42 @@ void CMAC::Train(double Y_in[nsample][N], double X_out[nsample][Q])
             for (int i = 0; i < Q; i++){
                 output_error += (X_out[m][i] - X[i]) * (X_out[m][i] - X[i]);
             }
+            //output_error += (X_out[m][0] - X[0]) * (X_out[m][0] - X[0]) + (X_out[m][1] - X[1]) * (X_out[m][1] - X[1]);
             MSE += 0.5 * output_error;
         }//end for nsample loop
         MSE = MSE / (nsample * 2);
         if (iter % 1 == 0)
         {
             cout << iter << "th iteration!" << endl << MSE << endl;
-            fileMSE << MSE << endl;
         }
-        if (MSE < MSE_THRESHOLD)
+        if (MSE<0.00003)
         {
             cout << "seccessful trained!" << endl; break;
         }
         iter++;
     }//end while loop
-    fileMSE.close();
 }
 
-void CMAC::Init()  //assign random value to 'W'
+void CMAC::Init()
 {
     for (int j = 0; j < Resolution; j++)
     {
         for (int k = 0; k < Resolution; k++)
         {
+            //wa[j][k] = 0.2;
+            //wb[j][k] = -0.2;
+
             wa[j][k] = (double)rand() / (double)(RAND_MAX)* 2 - 1;
             wb[j][k] = (double)rand() / (double)(RAND_MAX)* 2 - 1;
-        }
+            //cout<<w[1][j][k]<<" ";
+        }//cout<<endl;
     }
 
 }
 
 void CMAC::Forward()
 {
+    //int RFpos[Field_Size][N] = { { 0, 3 }, { 1, 0 }, { 2, 2 }, { 3, 4 }, { 4, 1 } };
     int local_coord;
     int shift_amount;
     double input_index_double;
@@ -119,8 +127,7 @@ void CMAC::Forward()
         {
             input_index_double = round(Y[c] * Resolution);
             input_index = int(input_index_double);
-	    //handle with the left & bottom border:
-            if (input_index > (Resolution-Field_Size)){ input_index = (Resolution-Field_Size); } 
+            if (input_index > (Resolution-Field_Size)){ input_index = (Resolution-Field_Size); }
             shift_amount = Field_Size - input_index % Field_Size;
             local_coord = (shift_amount + RFpos[r][c]) % Field_Size;
             coord = input_index + local_coord;
@@ -128,7 +135,6 @@ void CMAC::Forward()
             Position[r][c] = coord;
         }
     }
-
     X[0] = 0;
     for (int r = 0; r < Field_Size; r++)
     {
@@ -143,12 +149,14 @@ void CMAC::Forward()
         k = Position[r][1];
         X[1] += wb[j][k];
     }
+
+    //cout << X[0] << " " << X[1] << endl;
 }
 
 void CMAC::SavePara()
 {
     ofstream inFile;
-    inFile.open("data/W1.txt", ios::trunc);
+    inFile.open("W1.txt", ios::trunc);
     for (int j = 0; j < Resolution; j++)
     {
         for (int k = 0; k < Resolution; k++)
@@ -158,7 +166,7 @@ void CMAC::SavePara()
         inFile << endl;
     }
     inFile.close();
-    inFile.open("data/W2.txt", ios::trunc);
+    inFile.open("W2.txt", ios::trunc);
     for (int j = 0; j < Resolution; j++)
     {
         for (int k = 0; k < Resolution; k++)
@@ -173,7 +181,7 @@ void CMAC::SavePara()
 void CMAC::LoadPara()
 {
     ifstream file;
-    file.open("data/W1.txt");
+    file.open("W1.txt");
     for (int j = 0; j < Resolution; j++)
     {
         for (int k = 0; k < Resolution; k++)
@@ -182,7 +190,7 @@ void CMAC::LoadPara()
         }
     }
     file.close();
-    file.open("data/W2.txt");
+    file.open("W2.txt");
     for (int j = 0; j < Resolution; j++)
     {
         for (int k = 0; k < Resolution; k++)
@@ -242,6 +250,8 @@ void CMAC::Predict(double x, double y, double joint_value[])
         {
             j = Position[r][0];
             k = Position[r][1];
+//cout<<j<<" "<<k<<endl;
+//cout<<wa[j][k];
             X[0] += wa[j][k];
         }
         X[1] = 0;
@@ -251,7 +261,13 @@ void CMAC::Predict(double x, double y, double joint_value[])
             k = Position[r][1];
             X[1] += wb[j][k];
         }
+
+
     joint_value[0] = X[0];
     joint_value[1] = X[1];
+
     cout << "Prediction:" << endl << joint_value[0] << " " << joint_value[1]  << endl;
+
+
+
 }
