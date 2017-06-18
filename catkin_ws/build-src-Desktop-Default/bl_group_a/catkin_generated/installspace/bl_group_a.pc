@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: bl_group_a
+Description: Description of bl_group_a
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib 
+Requires: robot_specific_msgs roscpp rospy std_msgs

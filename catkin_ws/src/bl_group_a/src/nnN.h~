@@ -1,0 +1,320 @@
+#include <iostream>
+#include <cmath>
+#include <fstream>
+#include <stdlib.h> 
+#include <stdio.h>
+#include "robot_config.h"
+using namespace std;
+
+
+
+
+class FFNN{ //define ForwardFeed Neuronal Network
+
+public:
+	void Predict(int x,int y); //predict output by using the trained NN
+	void Train(double a_in[][2], double c_out[][2]);
+	void SavePara();
+	void LoadPara();
+private:
+	void InitNetWork();         //initialize network
+	double Sigmoid(double x);
+	void FeedForwrd();
+	void CalDelta();
+	void Update();
+private:
+	double alpha = 0.8;
+	double beta = 0.8;
+
+	double a[2];
+	double b[2];
+	double c[1];
+	double d[2];
+	double e[2];
+
+	double V[2][2];
+	double W[2][1];
+	double theta[2];
+	double fai[1];
+	double MSE;
+	double dV[2][2];
+	double dW[2][1];
+	double dtheta[2];
+	double dfai[1];
+};
+
+
+void FFNN::Train(double a_in[][2], double c_out[][1]){
+	int m=4;
+	//m = sizeof(a_in);
+	cout << "Begin to train BP NetWork!" << endl;
+	InitNetWork();
+
+	//use m-dimensions pairs to train
+	int iter = 1;
+	while (1)
+	{
+		MSE = 0;
+		for (int vi = 0; vi < 2; vi++){//vi: idx of ah; vj: idx of bi
+			for (int vj = 0; vj < 2; vj++){
+				dV[vi][vj] = 0;
+				dtheta[vj] = 0;
+			}
+		}
+		for (int wi = 0; wi < 2; wi++){//wi: idx of bi; wj: idx of cj
+			for (int wj = 0; wj < 1; wj++){
+				dW[wi][wj] = 0;
+				dfai[wj] = 0;
+			}
+		}
+	
+		
+		//cout << "this is " << iter << "th iteration!" << endl;
+		iter++;
+		for (int k = 0; k < m; k++)//k: idx of k_th input-output pairs
+		{
+			//get the input data
+			for (int h = 0; h < 2; h++)//h:idx of input data dimensions
+			{
+				a[h] = a_in[k][h];
+				
+			}
+			//cout << "a: " << endl << a[0] << "\t" << a[1] << endl;
+			FeedForwrd();
+			//CalDelta();
+			for (int j = 0; j < 1; j++)
+			{
+				d[j] = c[j] * (1 - c[j]) * (c_out[k][j] - c[j]);
+				//cout << "dj" << endl << d[j] << endl;
+			}
+			
+			for (int i = 0; i < 2; i++)
+			{
+				double sum_Wd = 0;
+				for (int j = 0; j < 1; j++)
+				{
+					sum_Wd += W[i][j] * d[j];
+				}
+				e[i] = b[i] * (1 - b[i]) * sum_Wd;
+				//cout << "e:" << e[i] << endl;
+			}
+			
+			//caldelta
+			for (int i = 0; i < 2; i++)
+			{
+				for (int j = 0; j < 1; j++)
+				{
+					dW[i][j] += alpha * b[i] * d[j];
+					dfai[j] += alpha * d[j];
+				}
+			}
+			for (int i = 0; i < 2; i++)
+			{
+				for (int h = 0; h < 2; h++)
+				{
+					dV[h][i] += beta * a[h] * e[i];
+					//cout << "ddddddddV:" << dV[h][i] << endl;
+					dtheta[i] += beta * e[i];
+				}
+			}
+
+			double output_error = 0;//(c_out[k][j] - c[j])^2
+			//MSE
+			for (int j = 0; j < 1; j++){
+				output_error += (c_out[k][j] - c[j]) * (c_out[k][j] - c[j]);
+			}
+			MSE += 0.5 * output_error;
+		}
+		MSE = MSE / (m * 1);
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 1; j++)
+			{
+				W[i][j] += dW[i][j]/m;
+				fai[j] += dfai[j]/m;
+			}
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			for (int h = 0; h < 2; h++)
+			{
+				V[h][i] += dV[h][i]/m;
+				theta[i] += dtheta[i]/m;
+			}
+		}
+		if (iter % 10000 == 0){ 
+			cout << "this is " << iter << "th iteration!" << endl;
+			cout << MSE << endl; 
+			//cout << "V: " << endl << V[0][0] << "\t" << V[0][1] << endl << V[1][0] << "\t" << V[1][1] << endl;
+			//cout << endl << "W: " << endl << W[0][0] << "\t" << W[0][1] << endl;
+		}
+		//if (iter>5) { cout << "seccessful trained!" << endl; break; }
+		if (MSE<0.00002) { cout << "seccessful trained!" << endl; break; }
+	}
+}
+
+void FFNN::InitNetWork(){
+	for (int vi = 0; vi < 2; vi++){//vi: idx of ah; vj: idx of bi
+		for (int vj = 0; vj < 2; vj++){
+			//V[vi][vj] = (double)(rand() % 200) / 150 - 1;
+			//theta[vj] = (double)(rand() % 200) / 150 - 1;
+                        V[vi][vj] = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX))*2-1;
+			theta[vj] = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX))*2-1;
+		}
+	}
+	for (int wi = 0; wi < 2; wi++){//wi: idx of bi; wj: idx of cj
+		for (int wj = 0; wj < 1; wj++){
+			//W[wi][wj] = (double)(rand() % 200) / 100 - 1;
+			//fai[wj] = (double)(rand() % 200) / 100 - 1;
+                        W[wi][wj] = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX))*2-1;
+			fai[wj] = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX))*2-1;
+		}
+	}
+	//cout << "V: " << endl << V[0][0] << "\t" << V[0][1] << endl << V[1][0] << "\t" << V[1][1] << endl;
+	//cout << endl << "W: " << endl << W[0][0] << "\t" << W[0][1] << endl;
+}
+
+double FFNN::Sigmoid(double x)
+{
+	return 1 / (1 + exp(-x));
+}
+
+void FFNN::FeedForwrd(){
+	for (int i = 0; i < 2; i++){
+		double sum_to_b = 0;
+		for (int h = 0; h < 2; h++){
+			sum_to_b += a[h] * V[h][i];
+		}
+		b[i] = Sigmoid(sum_to_b + theta[i]);
+		//cout << "b:" << endl << b[i] << endl;
+	}
+
+	for (int j = 0; j < 1; j++){
+		double sum_to_c = 0;
+		for (int i = 0; i < 2; i++){
+			sum_to_c += b[i] * W[i][j];
+		}
+		c[j] = Sigmoid(sum_to_c + fai[j]);
+	}
+	//cout << "feedforward:c" << endl << c[0] << endl;
+}
+
+
+
+void FFNN::SavePara()
+{
+	ofstream inFile;
+	inFile.open("data/V.txt", ios::trunc);
+	for (int h = 0; h < 2; h++){
+		for (int i = 0; i < 2; i++){
+			inFile << V[h][i] << "\t";
+		}
+		inFile << endl;
+	}
+	inFile.close();  
+
+	inFile.open("data/theta.txt", ios::trunc);
+	for (int i = 0; i < 2; i++){
+		inFile << theta[i] << "\t";
+	}
+	inFile.close();
+
+	inFile.open("data/W.txt", ios::trunc);
+	for (int j = 0; j < 1; j++){
+		for (int i = 0; i < 2; i++){
+			inFile << W[i][j] << "\t";
+		}
+		inFile << endl;
+	}
+	inFile.close();
+
+	inFile.open("data/fai.txt", ios::trunc);
+	inFile << fai[0];
+	inFile.close();
+}
+
+void FFNN::LoadPara(){
+	ifstream file;
+	file.open("data/V.txt");
+	for (int h = 0; h < 2; h++){
+		for (int i = 0; i < 2; i++){
+			file >> V[h][i];
+			//cout << V[h][i];
+		}
+	}
+	file.close();
+
+	file.open("data/W.txt");
+	for (int i = 0; i < 2; i++){
+		for (int j = 0; j < 2; j++){
+			file >> W[i][j];
+			//cout << V[h][i];
+		}
+	}
+	file.close();
+
+	file.open("data/theta.txt");
+	for (int i = 0; i < 2; i++){
+		file >> theta[i];
+	}
+	file.close();
+
+	file.open("data/fai.txt");
+	file >> fai[0];
+	file.close();
+        //cout << "V: " << endl << V[0][0] << "\t" << V[0][1] << endl << V[1][0] << "\t" << V[1][1] << endl;
+	//cout << endl << "W: " << endl << W[0][0] << "\t" << W[0][1] << endl;
+}
+
+void FFNN::Predict(int x,int y)
+{
+	//cout << "input_test:" << endl;
+	//cin >> a[0];
+	a[0] = x;
+	a[1] = y;
+
+	
+        //cout << "V: " << endl << V[0][0] << "\t" << V[0][1] << endl << V[1][0] << "\t" << V[1][1] << endl;
+	//cout << endl << "W: " << endl << W[0][0] << "\t" << W[0][1] << endl;
+	for (int i = 0; i < 2; i++){
+		double sum_to_b = 0;
+		for (int h = 0; h < 2; h++){
+			sum_to_b += a[h] * V[h][i];
+		}
+		b[i] = Sigmoid(sum_to_b + theta[i]);
+	}
+	for (int j = 0; j < 1; j++){
+
+		double sum_to_c = 0;
+		for (int i = 0; i < 2; i++){
+			sum_to_c += b[i] * W[i][j] ;
+		}
+		c[j] = Sigmoid(sum_to_c + fai[j]);
+
+	}
+	//return c[0];
+	cout << "output = " << c[0] << endl;
+}
+
+
+
+
+
+/*int main(){
+	FFNN net;
+	//	double *PointV;
+	double INPUT[4][2] = { { 1, 0 }, { 1, 1 }, { 0, 0 }, { 0, 1 } };//can be replaced by image points
+	double OUTPUT[4][1] = { 1, 0, 0, 1};
+
+	//net.Train(INPUT, OUTPUT);
+	//net.SavePara();
+	net.LoadPara();
+	//cout << fai[0] << endl;
+	net.Predict(0, 0);
+	net.Predict(0, 1);
+	net.Predict(1, 0);
+	net.Predict(1, 1);
+        return 0;
+
+
+}*/

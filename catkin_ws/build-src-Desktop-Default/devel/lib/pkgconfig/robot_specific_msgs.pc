@@ -1,0 +1,8 @@
+prefix=/home/biolearning_a/catkin_ws/build-src-Desktop-Default/devel
+
+Name: robot_specific_msgs
+Description: Description of robot_specific_msgs
+Version: 0.0.0
+Cflags: -I/home/biolearning_a/catkin_ws/build-src-Desktop-Default/devel/include
+Libs: -L/home/biolearning_a/catkin_ws/build-src-Desktop-Default/devel/lib 
+Requires: message_runtime

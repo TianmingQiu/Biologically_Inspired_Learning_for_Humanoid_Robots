@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/biolearning_a/catkin_ws/devel/setup.sh

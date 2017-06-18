@@ -1,0 +1,8 @@
+prefix=/home/biolearning_a/catkin_ws/build-src-Desktop-Default/devel
+
+Name: bl_group_a
+Description: Description of bl_group_a
+Version: 0.0.0
+Cflags: -I/home/biolearning_a/catkin_ws/src/bl_group_a/include
+Libs: -L/home/biolearning_a/catkin_ws/build-src-Desktop-Default/devel/lib 
+Requires: robot_specific_msgs roscpp rospy std_msgs

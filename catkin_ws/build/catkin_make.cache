@@ -1,0 +1,2 @@
+bl_group_a:robot_specific_msgs
+-DCATKIN_DEVEL_PREFIX=/home/biolearning_a/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/biolearning_a/catkin_ws/install -G Unix Makefiles
