@@ -1,5 +1,5 @@
  /*
- *   Author:      Erhard Wieser
+ *   Author:      Erhard Wieser, Tianming Qiu, Jiachen Xu, Qiuhai Guo
  *
      Description: A node for sending and receiving sensorimotor data from the NAO robot.
  */
